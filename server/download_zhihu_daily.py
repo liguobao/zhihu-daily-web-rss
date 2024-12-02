@@ -5,6 +5,7 @@ import requests
 from loguru import logger
 import json
 import datetime
+from server.setting import get_data_dir
 fail_list = []
 
 
@@ -44,7 +45,7 @@ def load_stories_by_date(date_text):
 
 def save_stories_by_date(date_text, stories):
   try:
-    file_name = f"./zhihu_daily_data/{date_text}.json"
+    file_name = get_data_dir() + f"/{date_text}.json"
     if not stories:
       logger.error(f"{threading.current_thread().name} save {file_name} fail, stories is empty")
       return
@@ -55,9 +56,9 @@ def save_stories_by_date(date_text, stories):
     logger.error(f"{threading.current_thread().name} save {file_name} fail, error: {e}")
 
 def req_and_save_stories_by_date(date_text):
-  file_name = f"./zhihu_daily_data/{date_text}.json"
+  file_name = get_data_dir() + f"/{date_text}.json"
   if os.path.exists(file_name):
-    logger.w(f"{threading.current_thread().name} {file_name} already exists")
+    logger.warning(f"{threading.current_thread().name} {file_name} already exists")
     return
   stories = load_stories_by_date(date_text)
   save_stories_by_date(date_text, stories)

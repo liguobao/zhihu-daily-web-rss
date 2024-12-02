@@ -10,6 +10,17 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "fast_api_app",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/fast_api_app.py",
+            "console": "integratedTerminal",
+            "env": {
+                "DATA_DIR": "${workspaceFolder}/server/zhihu_daily_data",
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         }
     ]
 }

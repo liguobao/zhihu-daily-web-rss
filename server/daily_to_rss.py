@@ -4,11 +4,24 @@ import json
 import xml.etree.ElementTree as ET
 from loguru import logger
 from datetime import datetime
+from io import StringIO
+import os
+from server.setting import get_data_dir
 
-def json_file_to_rss_data(json_file_path):
+def read_latest_date():
+    daily_data_dir = get_data_dir()
+    files = [f for f in os.listdir(daily_data_dir) if f.endswith('.json')]
+    latest_file = max(files)
+    date = latest_file.replace('.json', '')
+    logger.info(f"最新日期: {date}")
+    return date
+
+def read_daily_json(date_text):
+    daily_data_dir = get_data_dir()
+    json_file_path = os.path.join(daily_data_dir, f"{date_text}.json")
     if not os.path.exists(json_file_path):
         logger.error(f"JSON文件不存在：{json_file_path}")
-        return None
+        return []
     with open(json_file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
         return data
@@ -29,10 +42,17 @@ def parse_hint(hint):
     else:
         return (hint.strip(), "未知阅读时间")
 
-def create_rss_feed(data, rss_file_path):
+def to_rss_feed(data):
+    """
+    将知乎日报数据转换为RSS格式
+    Args:
+        data: 知乎日报JSON数据
+    Returns:
+        str: RSS内容的字符串，如果处理失败则返回空字符串
+    """
     if not data:
         logger.error("没有有效的JSON数据可用于生成RSS。")
-        return
+        return ""
 
     # 创建根元素
     rss = ET.Element('rss', version='2.0')
@@ -93,18 +113,22 @@ def create_rss_feed(data, rss_file_path):
         # 如果有发布时间，可以加入pubDate
         pubDate = ET.SubElement(item_element, 'pubDate')
         pubDate.text = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
-
-    # 生成XML树
-    tree = ET.ElementTree(rss)
+    # 生成XML字符串
     try:
-        tree.write(rss_file_path, encoding='utf-8', xml_declaration=True)
-        logger.info(f"RSS文件已成功生成：{rss_file_path}")
+        output = StringIO()
+        tree = ET.ElementTree(rss)
+        tree.write(output, encoding='unicode', xml_declaration=True)
+        return output.getvalue()
     except Exception as e:
-        logger.error(f"生成RSS文件时出错：{e}")
+        logger.error(f"生成RSS feed时发生错误: {e}")
+        return ""
 
 if __name__ == "__main__":
-    json_path = "zhihu_daily_data/20130520.json"  # 替换为你的JSON文件路径
-    rss_path = "output/rss_20130520.xml"         # 替换为你希望保存的RSS文件路径
+    json_path = "zhihu_daily_data/20130520.json"
+    rss_path = "output/rss_20130520.xml"
     
-    data = json_file_to_rss_data(json_path)
-    create_rss_feed(data, rss_path)
+    data = read_daily_json(json_path)
+    rss_content = to_rss_feed(data)
+    if rss_content:
+        with open(rss_path, 'w', encoding='utf-8') as f:
+            f.write(rss_content)

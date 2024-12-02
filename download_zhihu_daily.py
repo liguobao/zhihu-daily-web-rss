@@ -71,7 +71,10 @@ def to_date_list(start_date="20240901"):
     return data_list
 
 if __name__ == "__main__":
-  data_list = to_date_list("20130520")
+  # 从今天往前推一个月
+  old_date = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y%m%d")
+  logger.info(f"start download zhihu daily data, old_date: {old_date}")
+  data_list = to_date_list(old_date)
   logger.info(f"start download zhihu daily data, total: {len(data_list)}")
   threadPool = ThreadPoolExecutor(
       max_workers=32, thread_name_prefix="zhihu_daily")
